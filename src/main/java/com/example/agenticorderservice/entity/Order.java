@@ -46,4 +46,20 @@ public class Order {
             createdAt=Instant.now();
         }
     }
+
+    public static Order create(
+            String customerName,
+            String productName,
+            Integer quantity,
+            BigDecimal unitPrice
+    ) {
+        Order order = new Order();
+
+        order.customerName = customerName;
+        order.productName = productName;
+        order.quantity = quantity;
+        order.unitPrice = unitPrice;
+
+        return order;
+    }
 }
