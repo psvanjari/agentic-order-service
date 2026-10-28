@@ -1,10 +1,7 @@
 package com.example.agenticorderservice.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -13,6 +10,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "customer_orders")
 @Getter
+
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Order {
     @Id
@@ -26,6 +24,10 @@ public class Order {
     @Setter
     @Column(nullable = false,length = 150)
     private String productName;
+
+    @Setter
+    @Column(nullable = false)
+    private Integer quantity;
 
     @Setter
     @Column(nullable = false,precision = 12,scale = 2)
