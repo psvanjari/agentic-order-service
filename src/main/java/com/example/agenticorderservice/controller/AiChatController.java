@@ -1,5 +1,6 @@
 package com.example.agenticorderservice.controller;
 
+import com.example.agenticorderservice.ai.OrderTools;
 import com.example.agenticorderservice.dto.ChatRequest;
 import com.example.agenticorderservice.dto.ChatResponse;
 import jakarta.validation.Valid;
@@ -14,22 +15,54 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/ai")
 public class AiChatController {
     private final ChatClient chatClient;
+    private final OrderTools orderTools;
 
-    public AiChatController(ChatClient.Builder chatClientBuilder){
+    public AiChatController(ChatClient.Builder chatClientBuilder,OrderTools orderTools){
         this.chatClient=chatClientBuilder.build();
+        this.orderTools=orderTools;
     }
 
-    @PostMapping(
-            value = "/chat",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ChatResponse chat(@Valid @RequestBody ChatRequest request){
-        String answer=chatClient.prompt()
+
+    @PostMapping("/chat")
+    public ChatResponse chat(@RequestBody ChatRequest request) {
+        String reply = chatClient.prompt()
+                .system("""
+                    You are a helpful order-management assistant.
+
+                    You can retrieve real orders and prepare order drafts
+                    using the available tools.
+
+                    ORDER CREATION RULES:
+                    1. Never create or claim to have created an order
+                       during a chat response.
+                    2. When the user requests an order, collect the
+                       customer name, product name, quantity, and
+                       unit price.
+                    3. If any detail is missing or ambiguous, ask a
+                       clarification question instead of guessing.
+                    4. Once all details are explicit, call proposeOrder
+                       to prepare a draft.
+                    5. Show the draft ID, all order details, and total.
+                    6. Clearly tell the user that no order exists yet
+                       and that explicit confirmation is required.
+                    7. Never call the draft-confirmation HTTP endpoint
+                       yourself. The application handles confirmation
+                       separately.
+                    8. Do not treat "yes" or similar chat text as proof
+                       that the application has confirmed the draft.
+                    9. Never invent order IDs, order details, or statuses.
+
+                    ORDER RETRIEVAL RULES:
+                    Use the available order tools for actual database
+                    information. Clearly report when no matching order
+                    exists. Do not invent results.
+                    """)
                 .user(request.message())
+                .tools(orderTools)
                 .call()
                 .content();
 
-        return new ChatResponse(answer);
+        return new ChatResponse(reply);
     }
+
 }
